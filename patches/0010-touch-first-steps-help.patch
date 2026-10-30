@@ -1,0 +1,45 @@
+--- a/src/help_gui.cpp
++++ b/src/help_gui.cpp
+@@ -122,6 +122,11 @@
+ };
+ 
+ /** Window class displaying the help window. */
++#ifdef OTTD_TOUCH_UI
++extern void ShowNativeTouchTutorial();
++static constexpr WidgetID WID_HW_TOUCH_TUTORIAL = 1000;
++#endif
++
+ struct HelpWindow : public Window {
+ 
+ 	HelpWindow(WindowDesc &desc, WindowNumber number) : Window(desc)
+@@ -135,9 +140,20 @@
+ 		this->EnableTextfileButton(FONTS_FILENAME, DOCS_DIR, WID_HW_FONTS);
+ 	}
+ 
++#ifdef OTTD_TOUCH_UI
++	std::string GetWidgetString(WidgetID widget, StringID stringid) const override
++	{
++		if (widget == WID_HW_TOUCH_TUTORIAL) return "First steps tutorial";
++		return Window::GetWidgetString(widget, stringid);
++	}
++#endif
++
+ 	void OnClick([[maybe_unused]] Point pt, WidgetID widget, [[maybe_unused]] int click_count) override
+ 	{
+ 		switch (widget) {
++#ifdef OTTD_TOUCH_UI
++			case WID_HW_TOUCH_TUTORIAL: ShowNativeTouchTutorial(); break;
++#endif
+ 			case WID_HW_README:
+ 				new GameManualTextfileWindow(README_FILENAME, BASE_DIR);
+ 				break;
+@@ -191,6 +207,9 @@
+ 			EndContainer(),
+ 
+ 			NWidget(WWT_FRAME, COLOUR_DARK_GREEN), SetStringTip(STR_HELP_WINDOW_DOCUMENTS),
++#ifdef OTTD_TOUCH_UI
++				NWidget(WWT_PUSHTXTBTN, COLOUR_GREEN, WID_HW_TOUCH_TUTORIAL), SetStringTip(STR_JUST_RAW_STRING), SetMinimalSize(128, 44), SetFill(1, 0),
++#endif
+ 				NWidget(WWT_PUSHTXTBTN, COLOUR_GREEN, WID_HW_README), SetStringTip(STR_HELP_WINDOW_README), SetMinimalSize(128, 12), SetFill(1, 0),
+ 				NWidget(WWT_PUSHTXTBTN, COLOUR_GREEN, WID_HW_CHANGELOG), SetStringTip(STR_HELP_WINDOW_CHANGELOG), SetMinimalSize(128, 12), SetFill(1, 0),
+ 				NWidget(WWT_PUSHTXTBTN, COLOUR_GREEN, WID_HW_KNOWN_BUGS),SetStringTip(STR_HELP_WINDOW_KNOWN_BUGS), SetMinimalSize(128, 12), SetFill(1, 0),

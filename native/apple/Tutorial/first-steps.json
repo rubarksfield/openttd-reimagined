@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "title": "First steps",
+  "pages": [
+    {
+      "title": "Your first transport company",
+      "body": "Build a useful route, carry passengers or cargo, earn fares and expand. Start with a bus: it teaches the same construction, vehicle and order tools you will use for trains, ships and aircraft."
+    },
+    {
+      "title": "Start a small, familiar world",
+      "body": "Choose New Game. For your first game, use the Temperate landscape and a 128 \u00d7 128 map, then tap Generate. Leave the other settings at their defaults.\n\nLook for two nearby towns joined by an existing road. Reusing public roads keeps your first route simple and inexpensive."
+    },
+    {
+      "title": "Find your way around",
+      "body": "Drag with one finger to move the map when no construction tool is active. Pinch to move between zoom levels. Tap a town, station, industry or vehicle to open its original information window.\n\nWhen a construction tool is active, use two fingers to pan. Close its toolbar before returning to one-finger navigation."
+    },
+    {
+      "title": "Build two passenger stops",
+      "body": "Open the road construction toolbar and choose the bus-stop tool, not the truck loading-bay tool. Choose a drive-through stop and match its direction to the road.\n\nPlace a stop on a straight road near houses in the first town. Place another in the second town on the same connected road network."
+    },
+    {
+      "title": "Add a depot and buy a bus",
+      "body": "Choose a road depot from the same construction toolbar. Build it beside the road with its entrance facing a connected road tile.\n\nTap the depot, choose New Vehicles, select a passenger bus and choose Buy Vehicle. In an early Temperate game, the MPS Regal Bus is one option."
+    },
+    {
+      "title": "Tell the bus where to go",
+      "body": "Open the bus\u2019s Orders window. Choose Go To, then tap your first bus stop on the map. Choose Go To again and tap the second stop.\n\nCheck that both station names appear in the order list, in the order you want. The bus repeats this list automatically."
+    },
+    {
+      "title": "Run the route and watch",
+      "body": "Start the bus with its start/stop control. In the original vehicle panel, tapping the red Stopped status bar starts a stopped vehicle.\n\nWatch it leave the depot, visit both stops, load passengers and deliver them. Passenger numbers may take time to build up."
+    },
+    {
+      "title": "Read the business results",
+      "body": "Open the vehicle information and company finances. Look for passenger income, running costs and vehicle profit over time.\n\nA delivery creates a fare. Construction and vehicle purchases reduce cash immediately; servicing and running costs continue while you operate."
+    },
+    {
+      "title": "Move on to railways",
+      "body": "Use the railway construction toolbar. Drag track with Autorail, place stations beside the route and connect a correctly oriented train depot to the track.\n\nBuy a locomotive and suitable carriages from the depot. Add station orders, then start the train. A passenger engine still needs passenger capacity."
+    },
+    {
+      "title": "Save, return and explore",
+      "body": "Use the original save/load menu to save your company with a recognisable name. Make a manual save before experimenting. Use Load Game to return to it later.\n\nOnline Content downloads community packages. The Import Files buttons let you bring supported saves, scenarios and NewGRFs from Files into the app."
+    }
+  ]
+}

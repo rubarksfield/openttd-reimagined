@@ -1,0 +1,83 @@
+--- a/src/dropdown_common_type.h
++++ b/src/dropdown_common_type.h
+@@ -74,6 +74,9 @@
+ 		return std::max<uint>(this->dim.height, this->TBase::Height());
+ 	}
+ 
++	/** Plain label for platform accessibility; does not change selection behaviour. */
++	const std::string &GetAccessibleLabel() const { return this->string; }
++
+ 	uint Width() const override { return this->dim.width + this->TBase::Width(); }
+ 
+ 	int OnClick(const Rect &r, const Point &pt) const override
+--- a/src/dropdown.cpp
++++ b/src/dropdown.cpp
+@@ -72,6 +72,16 @@
+ 	WindowDefaultFlag::NoFocus,
+ 	_nested_dropdown_menu_widgets
+ );
++
++/** Presentation-only sizing for a native touch host. */
++static uint DropDownItemHeight(const DropDownListItem &item)
++{
++#ifdef OTTD_TOUCH_UI
++	extern uint _openttd_touch_target;
++	if (item.Selectable()) return std::max(item.Height(), _openttd_touch_target);
++#endif
++	return item.Height();
++}
+ 
+ /** Drop-down menu window */
+ struct DropdownWindow : Window {
+@@ -240,7 +250,7 @@
+ 		int y_end = r.Height();
+ 
+ 		for (const auto &item : this->list) {
+-			int item_height = item->Height();
++			int item_height = DropDownItemHeight(*item);
+ 
+ 			/* Skip items that are scrolled up */
+ 			if (y > y_end) break;
+@@ -276,7 +286,7 @@
+ 		int y_end = ir.Height();
+ 
+ 		for (const auto &item : this->list) {
+-			int item_height = item->Height();
++			int item_height = DropDownItemHeight(*item);
+ 
+ 			/* Skip items that are scrolled up */
+ 			if (y > y_end) break;
+@@ -382,7 +392,7 @@
+ {
+ 	Dimension dim{};
+ 	for (const auto &item : list) {
+-		dim.height += item->Height();
++		dim.height += DropDownItemHeight(*item);
+ 		dim.width = std::max(dim.width, item->Width());
+ 	}
+ 	dim.width += WidgetDimensions::scaled.dropdowntext.Horizontal();
+@@ -469,3 +479,24 @@
+ 
+ 	if (!list.empty()) ShowDropDownList(w, std::move(list), selected, button, width, {});
+ }
++
++/** Visit visible rows on the engine owner, preserving original text and hit geometry. */
++void VisitDropDownListRows(const std::function<void(const Rect &, std::string_view, int, bool)> &visitor)
++{
++	auto *w = dynamic_cast<DropdownWindow *>(FindWindowByClass(WC_DROPDOWN_MENU));
++	if (w == nullptr) return;
++	auto *panel = w->GetWidget<NWidgetBase>(WID_DM_ITEMS);
++	int left = w->left + panel->pos_x + WidgetDimensions::scaled.dropdownlist.left;
++	int top = w->top + panel->pos_y + WidgetDimensions::scaled.dropdownlist.top;
++	int right = w->left + panel->pos_x + panel->current_x - WidgetDimensions::scaled.dropdownlist.right - 1;
++	int bottom = w->top + panel->pos_y + panel->current_y - WidgetDimensions::scaled.dropdownlist.bottom - 1;
++	int y = top - w->vscroll->GetPosition();
++	for (const auto &item : w->list) {
++		int height = DropDownItemHeight(*item);
++		auto *text = dynamic_cast<const DropDownListStringItem *>(item.get());
++		if (text != nullptr && item->Selectable() && y >= top && y + height - 1 <= bottom) {
++			visitor({left, y, right, y + height - 1}, text->GetAccessibleLabel(), item->result, item->masked);
++		}
++		y += height;
++	}
++}

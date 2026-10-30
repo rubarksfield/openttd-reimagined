@@ -1,0 +1,6 @@
+{
+  "source": "Installed official OpenTTD 16.0-beta5 macOS application, Contents/Resources/baseset/opntitle.dat",
+  "sha256": "1645d6bd627df06986b1884c57f1e328f3ab606aa32549ed88a9220b1b1230fa",
+  "license": "OpenTTD GPL-2.0; game graphics continue to use the selected base set",
+  "replaces_unmodified_title_sha256": "ebb39b9b14ec756594bd63050e746787f5770cb970219d41169e8d4e8183732d"
+}

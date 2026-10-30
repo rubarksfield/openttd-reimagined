@@ -1,0 +1,23 @@
+--- a/src/window.cpp
++++ b/src/window.cpp
+@@ -1516,6 +1516,20 @@
+ 	const Window *wt = FindWindowById(WC_MAIN_TOOLBAR, 0);
+ 	ny = std::max(ny, (wt == nullptr || this == wt || this->top == 0) ? 0 : wt->height);
+ 	nx = std::max(nx, 0);
++#ifdef OTTD_TOUCH_UI
++	/* Keep touch-sized automatic dialogs fully reachable between vital bars. */
++	if (this->window_desc.default_pos == WDP_AUTO && !IsVitalWindow(this)) {
++		int top = wt == nullptr ? 0 : wt->top + wt->height;
++		int bottom = _screen.height;
++		const Window *status = FindWindowById(WC_STATUS_BAR, 0);
++		if (status != nullptr && status != this) bottom = std::min(bottom, status->top);
++		if (bottom - top >= this->height) {
++			ny = Clamp(ny, top, bottom - this->height);
++		} else {
++			ny = top;
++		}
++	}
++#endif
+ 
+ 	if (this->viewport != nullptr) {
+ 		this->viewport->left += nx - this->left;

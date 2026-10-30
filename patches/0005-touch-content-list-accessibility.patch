@@ -1,0 +1,46 @@
+--- a/src/network/network_content_gui.cpp
++++ b/src/network/network_content_gui.cpp
+@@ -322,6 +322,7 @@
+ 
+ /** Window that lists the content that's at the content server */
+ class NetworkContentListWindow : public Window, ContentCallback {
++	friend void VisitNetworkContentRows(const std::function<void(const Rect &, const Rect &, std::string_view, int, bool)> &visitor);
+ 	/** List with content infos. */
+ 	typedef GUIList<const ContentInfo *, std::nullptr_t, ContentListFilterData &> GUIContentList;
+ 
+@@ -604,6 +605,10 @@
+ 
+ 			case WID_NCL_MATRIX:
+ 				fill.height = resize.height = std::max<uint>(std::max<uint>(this->checkbox_size.height, GetCharacterHeight(FS_NORMAL)), GetCharacterHeight(FS_SMALL)) + padding.height;
++#ifdef OTTD_TOUCH_UI
++				extern uint _openttd_touch_target;
++				fill.height = resize.height = std::max<uint>(resize.height, _openttd_touch_target);
++#endif
+ 				size.height = 10 * resize.height;
+ 				break;
+ 		}
+@@ -1140,3 +1145,24 @@
+ 		WL_ERROR);
+ #endif /* WITH_ZLIB */
+ }
++
++/** Read the real filtered rows for native accessibility; selection still uses original input. */
++void VisitNetworkContentRows(const std::function<void(const Rect &, const Rect &, std::string_view, int, bool)> &visitor)
++{
++	for (Window *base : Window::IterateFromFront()) {
++		auto *w = dynamic_cast<NetworkContentListWindow *>(base);
++		if (w == nullptr) continue;
++		auto *matrix = w->GetWidget<NWidgetBase>(WID_NCL_MATRIX);
++		Rect row = matrix->GetCurrentRect().WithHeight(matrix->resize_y).Translate(w->left, w->top);
++		Rect checkbox = w->GetWidget<NWidgetBase>(WID_NCL_CHECKBOX)->GetCurrentRect().Translate(w->left, w->top);
++		auto [first, last] = w->vscroll->GetVisibleRangeIterators(w->content);
++		int index = w->vscroll->GetPosition();
++		for (auto it = first; it != last; ++it, ++index) {
++			const ContentInfo *item = *it;
++			std::string label = item->name + " " + item->version;
++			bool disabled = item->state == ContentInfo::State::AlreadyHere || item->state == ContentInfo::State::DoesNotExist;
++			if (FindWindowFromPt((row.left + row.right) / 2, (row.top + row.bottom) / 2) == w) visitor(row, checkbox.WithY(row), label, index, disabled);
++			row = row.Translate(0, matrix->resize_y);
++		}
++	}
++}

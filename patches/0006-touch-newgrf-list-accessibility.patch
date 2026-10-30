@@ -1,0 +1,129 @@
+--- a/src/newgrf_gui.cpp
++++ b/src/newgrf_gui.cpp
+@@ -734,7 +734,15 @@
+ 			{
+ 				Dimension d = maxdim(GetScaledSpriteSize(SPR_SQUARE), GetScaledSpriteSize(SPR_WARNING_SIGN));
+ 				fill.height = resize.height = std::max<uint>(d.height + 2U, GetCharacterHeight(FS_NORMAL));
++#ifdef OTTD_TOUCH_UI
++				extern uint _openttd_touch_target;
++				fill.height = resize.height = std::max<uint>(resize.height, _openttd_touch_target);
++#endif
++#ifdef OTTD_TOUCH_UI
++				size.height = std::max(size.height, padding.height + (_screen.height < 900 ? 2 : 3) * resize.height);
++#else
+ 				size.height = std::max(size.height, padding.height + 6 * resize.height);
++#endif
+ 				break;
+ 			}
+ 
+@@ -742,7 +750,15 @@
+ 			{
+ 				Dimension d = maxdim(GetScaledSpriteSize(SPR_SQUARE), GetScaledSpriteSize(SPR_WARNING_SIGN));
+ 				fill.height = resize.height = std::max<uint>(d.height + 2U, GetCharacterHeight(FS_NORMAL));
++#ifdef OTTD_TOUCH_UI
++				extern uint _openttd_touch_target;
++				fill.height = resize.height = std::max<uint>(resize.height, _openttd_touch_target);
++#endif
++#ifdef OTTD_TOUCH_UI
++				size.height = std::max(size.height, padding.height + (_screen.height < 900 ? 2 : 3) * resize.height);
++#else
+ 				size.height = std::max(size.height, padding.height + 8 * resize.height);
++#endif
+ 				break;
+ 			}
+ 
+@@ -787,6 +803,11 @@
+ 	std::string GetWidgetString(WidgetID widget, StringID stringid) const override
+ 	{
+ 		switch (widget) {
++#ifdef OTTD_TOUCH_UI
++			case WID_NS_NATIVE_IMPORT:
++			case WID_NS_NATIVE_IMPORT2:
++				return "Import files…";
++#endif
+ 			case WID_NS_PRESET_LIST:
+ 				if (this->preset == -1) return GetString(STR_NUM_CUSTOM);
+ 
+@@ -1123,6 +1144,14 @@
+ 				}
+ 				break;
+ 
++#ifdef OTTD_TOUCH_UI
++			case WID_NS_NATIVE_IMPORT:
++			case WID_NS_NATIVE_IMPORT2: {
++				extern void OpenNativeContentImport();
++				OpenNativeContentImport();
++				break;
++			}
++#endif
+ 			case WID_NS_RESCAN_FILES:
+ 			case WID_NS_RESCAN_FILES2:
+ 				RequestNewGRFScan(this);
+@@ -1792,6 +1821,9 @@
+ 				NWidget(NWID_VERTICAL, NWidContainerFlag::EqualSize),
+ 					NWidget(WWT_PUSHTXTBTN, COLOUR_YELLOW, WID_NS_RESCAN_FILES2), SetFill(1, 0), SetResize(1, 0),
+ 							SetStringTip(STR_NEWGRF_SETTINGS_RESCAN_FILES, STR_NEWGRF_SETTINGS_RESCAN_FILES_TOOLTIP),
++#ifdef OTTD_TOUCH_UI
++					NWidget(WWT_PUSHTXTBTN, COLOUR_YELLOW, WID_NS_NATIVE_IMPORT2), SetFill(1, 0), SetResize(1, 0), SetStringTip(STR_JUST_RAW_STRING),
++#endif
+ 					NWidget(WWT_PUSHTXTBTN, COLOUR_YELLOW, WID_NS_CONTENT_DOWNLOAD2), SetFill(1, 0), SetResize(1, 0),
+ 							SetStringTip(STR_INTRO_ONLINE_CONTENT, STR_INTRO_TOOLTIP_ONLINE_CONTENT),
+ 				EndContainer(),
+@@ -1826,6 +1858,9 @@
+ 			NWidget(NWID_VERTICAL),
+ 				NWidget(WWT_PUSHTXTBTN, COLOUR_YELLOW, WID_NS_RESCAN_FILES), SetFill(1, 0), SetResize(1, 0),
+ 						SetStringTip(STR_NEWGRF_SETTINGS_RESCAN_FILES, STR_NEWGRF_SETTINGS_RESCAN_FILES_TOOLTIP),
++#ifdef OTTD_TOUCH_UI
++				NWidget(WWT_PUSHTXTBTN, COLOUR_YELLOW, WID_NS_NATIVE_IMPORT), SetFill(1, 0), SetResize(1, 0), SetStringTip(STR_JUST_RAW_STRING),
++#endif
+ 				NWidget(WWT_PUSHTXTBTN, COLOUR_YELLOW, WID_NS_CONTENT_DOWNLOAD), SetFill(1, 0), SetResize(1, 0),
+ 						SetStringTip(STR_INTRO_ONLINE_CONTENT, STR_INTRO_TOOLTIP_ONLINE_CONTENT),
+ 			EndContainer(),
+@@ -2223,3 +2258,36 @@
+ 	if (w == nullptr) w = new ScanProgressWindow();
+ 	w->UpdateNewGRFScanStatus(num, std::move(name));
+ }
++
++/** Read original active/available NewGRF rows for native accessibility. */
++void VisitNewGRFRows(const std::function<void(const Rect &, std::string_view, int, bool)> &visitor)
++{
++	for (Window *base : Window::IterateFromFront()) {
++		auto *w = dynamic_cast<NewGRFWindow *>(base);
++		if (w == nullptr) continue;
++		for (bool active : {false, true}) {
++			auto *widget = w->GetWidget<NWidgetBase>(active ? WID_NS_FILE_LIST : WID_NS_AVAIL_LIST);
++			Rect row = widget->GetCurrentRect().Shrink(WidgetDimensions::scaled.framerect).WithHeight(widget->resize_y).Translate(w->left, w->top);
++			Scrollbar *scroll = active ? w->vscroll : w->vscroll2;
++			int index = 0;
++			auto visit = [&](const GRFConfig *item) {
++				if (scroll->IsVisible(index)) {
++					if (FindWindowFromPt((row.left + row.right) / 2, (row.top + row.bottom) / 2) == w) visitor(row, item->GetName(), index, active);
++					row = row.Translate(0, widget->resize_y);
++				}
++				++index;
++			};
++			if (active) { for (const auto &item : w->actives) visit(item.get()); }
++			else { for (const auto *item : w->avails) visit(item); }
++		}
++	}
++}
++
++#ifdef OTTD_TOUCH_UI
++/** Reuse the original scan callback so the existing available list rebuilds. */
++bool RefreshNativeNewGRFs()
++{
++	auto *window = dynamic_cast<NewGRFWindow *>(FindWindowById(WC_GAME_OPTIONS, WN_GAME_OPTIONS_NEWGRF_STATE));
++	return RequestNewGRFScan(window);
++}
++#endif
+--- a/src/widgets/newgrf_widget.h
++++ b/src/widgets/newgrf_widget.h
+@@ -60,6 +60,8 @@
+ 	WID_NS_SHOW_REMOVE,       ///< Select active list buttons (0 = normal, 1 = simple layout).
+ 	WID_NS_SHOW_EDIT,         ///< Select display of the buttons below the 'details'.
+ 	WID_NS_SHOW_APPLY,        ///< Select display of the apply button.
++	WID_NS_NATIVE_IMPORT,     ///< Native platform document import (available files).
++	WID_NS_NATIVE_IMPORT2,    ///< Native platform document import (active files).
+ };
+ 
+ /** Widgets of the #SavePresetWindow class. */

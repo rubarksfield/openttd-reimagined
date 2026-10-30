@@ -1,0 +1,14 @@
+--- a/src/stdafx.h
++++ b/src/stdafx.h
+@@ -24,6 +24,11 @@
+ #endif
+ 
+ #if defined(__APPLE__)
++#	include <TargetConditionals.h>
++#endif
++
++/* macOS framework headers are not available to iOS/iPadOS targets. */
++#if defined(__APPLE__) && TARGET_OS_OSX
+ #	include "os/macosx/osx_stdafx.h"
+ #else
+ /* It seems that we need to include stdint.h before anything else

@@ -1,0 +1,35 @@
+--- a/src/widget.cpp
++++ b/src/widget.cpp
+@@ -2981,6 +2981,32 @@
+ 
+ 	if (this->index >= 0) w->UpdateWidgetSize(this->index, size, padding, fill, resize);
+ 
++#ifdef OTTD_TOUCH_UI
++	/* Native touch host: retain original widgets/actions, enlarge interactive targets. */
++	extern uint _openttd_touch_target;
++	switch (this->type) {
++		case WWT_IMGBTN: case WWT_IMGBTN_2: case WWT_PUSHIMGBTN:
++		case WWT_IMGTEXTBTN: case WWT_PUSHIMGTEXTBTN:
++		case WWT_TEXTBTN: case WWT_PUSHTXTBTN: case WWT_TEXTBTN_2:
++		case WWT_ARROWBTN: case WWT_PUSHARROWBTN:
++		case WWT_CLOSEBOX: case WWT_STICKYBOX: case WWT_SHADEBOX:
++		case WWT_DEFSIZEBOX: case WWT_RESIZEBOX: case WWT_PUSHBTN:
++		case WWT_BOOLBTN: case WWT_EDITBOX: case WWT_DROPDOWN:
++		case NWID_BUTTON_DROPDOWN: case NWID_PUSHBUTTON_DROPDOWN:
++			size.width = std::max(size.width, _openttd_touch_target);
++			size.height = std::max(size.height, _openttd_touch_target);
++			break;
++		default: break;
++	}
++	/* Drawing reserves a square image column as tall as the enlarged button. */
++	if ((this->type == WWT_IMGTEXTBTN || this->type == WWT_PUSHIMGTEXTBTN) && this->widget_data.sprite != 0) {
++		uint image_width = std::max<uint>(GetSquareScaledSpriteSize(this->widget_data.sprite).width,
++			size.height - WidgetDimensions::scaled.framerect.Vertical());
++		Dimension text = GetStringBoundingBox(GetStringForWidget(w, this), this->text_size);
++		size.width = std::max<uint>(size.width, WidgetDimensions::scaled.framerect.Horizontal() + image_width + WidgetDimensions::scaled.hsep_wide + text.width);
++	}
++#endif
++
+ 	this->smallest_x = size.width;
+ 	this->smallest_y = size.height;
+ 	this->fill_x = fill.width;

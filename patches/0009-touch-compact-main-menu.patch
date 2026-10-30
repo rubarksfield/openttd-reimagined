@@ -1,0 +1,85 @@
+--- a/src/intro_gui.cpp
++++ b/src/intro_gui.cpp
+@@ -99,6 +99,20 @@
+ 
+ 
+ struct SelectGameWindow : public Window {
++#ifdef OTTD_TOUCH_UI
++	bool compact_touch_layout = _screen.height < 650;
++public:
++	void RefreshTouchLayout()
++	{
++		if (this->compact_touch_layout == (_screen.height < 650)) return;
++		this->compact_touch_layout = _screen.height < 650;
++		this->UnfocusFocusedWidget();
++		this->widget_lookup.clear();
++		this->CreateNestedTree();
++		this->nested_root->AdjustPaddingForZoom();
++		this->ReInit(0, 0, true);
++	}
++#endif
+ 	/** Vector of viewport commands parsed. */
+ 	std::vector<IntroGameViewportCommand> intro_viewport_commands{};
+ 	/** Index of currently active viewport command. */
+@@ -388,11 +402,61 @@
+ 	EndContainer(),
+ };
+ 
++#ifdef OTTD_TOUCH_UI
++/** Reflow the original groups; every button definition and action stays upstream. */
++static std::unique_ptr<NWidgetBase> MakeTouchSelectGameWidgets()
++{
++	std::span<const NWidgetPart> original{_nested_select_game_widgets.begin(), _nested_select_game_widgets.size()};
++	if (_screen.height >= 650) return MakeNWidgets(original, nullptr);
++
++	/* The pinned menu has six top-level groups: single player, multiplayer,
++	 * graphics warning, translation warning, other actions, and exit. */
++	std::vector<std::span<const NWidgetPart>> groups;
++	size_t start = 0;
++	int depth = 0;
++	for (size_t i = 0; i < original.size(); ++i) {
++		if (IsContainerWidgetType(original[i].type)) {
++			if (depth == 2) start = i;
++			++depth;
++		} else if (original[i].type == WPT_ENDCONTAINER) {
++			--depth;
++			if (depth == 2) groups.push_back(original.subspan(start, i - start + 1));
++		}
++	}
++	assert(groups.size() == 6);
++	std::vector<NWidgetPart> parts(original.begin(), groups.front().begin());
++	auto append = [&](std::span<const NWidgetPart> group) { parts.insert(parts.end(), group.begin(), group.end()); };
++	parts.push_back(NWidget(NWID_HORIZONTAL));
++	parts.push_back(SetPIP(0, WidgetDimensions::unscaled.hsep_wide, 0));
++	append(groups[0]);
++	parts.push_back(NWidget(NWID_VERTICAL));
++	parts.push_back(SetPIP(0, WidgetDimensions::unscaled.vsep_wide, 0));
++	for (size_t i : {1, 4, 5}) append(groups[i]);
++	parts.push_back(EndContainer());
++	parts.push_back(EndContainer());
++	append(groups[2]);
++	append(groups[3]);
++	append(original.subspan(groups.back().data() + groups.back().size() - original.data()));
++	return MakeNWidgets(parts, nullptr);
++}
++
++static constexpr std::initializer_list<NWidgetPart> _touch_select_game_widgets = {NWidgetFunction(MakeTouchSelectGameWidgets)};
++
++void RefreshNativeMainMenuLayout()
++{
++	if (auto *w = FindWindowById(WC_SELECT_GAME, 0)) static_cast<SelectGameWindow *>(w)->RefreshTouchLayout();
++}
++#endif
++
+ static WindowDesc _select_game_desc(
+ 	WDP_CENTER, {}, 0, 0,
+ 	WC_SELECT_GAME, WC_NONE,
+ 	WindowDefaultFlag::NoClose,
++#ifdef OTTD_TOUCH_UI
++	_touch_select_game_widgets
++#else
+ 	_nested_select_game_widgets
++#endif
+ );
+ 
+ void ShowSelectGameWindow()

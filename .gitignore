@@ -1,0 +1,13 @@
+/.tools/
+/build/
+/vendor/
+/runtime/
+/downloads/
+/artifacts/
+/evidence/
+/.xcodebuildmcp/
+**/xcuserdata/
+*.xcuserstate
+.DS_Store
+__pycache__/
+*.pyc
