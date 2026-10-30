@@ -49,6 +49,12 @@ set_source_files_properties("${PROJECT_ROOT}/native/apple/PrivacyInfo.xcprivacy"
 set_source_files_properties("${UPSTREAM}/src/story_gui.cpp" PROPERTIES COMPILE_DEFINITIONS OTTD_TOUCH_UI)
 if(CMAKE_GENERATOR STREQUAL "Xcode")
  set_property(GLOBAL PROPERTY XCODE_EMIT_EFFECTIVE_PLATFORM_NAME ON)
+ # An archive must contain the app in Products/Applications. CMake's default
+ # empty install path otherwise produces a successful but empty generic archive.
+ set_target_properties(OpenTTDPad PROPERTIES XCODE_ATTRIBUTE_SKIP_INSTALL NO XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)")
+ foreach(native_library openttd_engine native_content_import liblzma archive_static)
+  set_target_properties(${native_library} PROPERTIES XCODE_ATTRIBUTE_SKIP_INSTALL YES)
+ endforeach()
  # File Provider can reattach FinderInfo to .app directories in Documents,
  # invalidating Apple's signing rules. Keep signable products in local
  # DerivedData; source, object files and player documents stay in place.

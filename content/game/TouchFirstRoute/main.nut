@@ -101,6 +101,7 @@ class TouchFirstRoute extends GSController {
         return false;
     }
     function Tick() {
+        if(this.state.step>=17)return;
         local bus = this.Bus(), depot = this.Tile(48,65), step = this.state.step;
         // Recover from ordinary beginner mistakes instead of completing a
         // stale checklist after a station, depot, vehicle or order is removed.
@@ -110,6 +111,16 @@ class TouchFirstRoute extends GSController {
         if(step>9&&step<17&&bus==-1){this.ReturnTo(7);return;}
         if(step>12&&step<17&&!this.HasOrder(bus,34)){this.ReturnTo(12);return;}
         if(step>13&&step<17&&!this.HasOrder(bus,78)){this.ReturnTo(13);return;}
+        // Original save/load does not restore every management window. Lead
+        // back to the relevant opening action without deleting built progress
+        // or asking the player to purchase another bus.
+        if(step==8&&!GSWindow.IsOpen(GSWindow.WC_VEHICLE_DEPOT,depot)){this.ReturnTo(7);return;}
+        if(step==8&&bus!=-1){this.ReturnTo(10);return;}
+        if(step==9&&!GSWindow.IsOpen(GSWindow.WC_BUILD_VEHICLE,depot)){this.ReturnTo(8);return;}
+        if(step==10&&!GSWindow.IsOpen(GSWindow.WC_VEHICLE_DEPOT,depot)&&!GSWindow.IsOpen(GSWindow.WC_VEHICLE_VIEW,bus)){this.ReturnTo(7);return;}
+        if(step==11&&!GSWindow.IsOpen(GSWindow.WC_VEHICLE_VIEW,bus)){this.ReturnTo(10);return;}
+        if((step==12||step==13)&&!GSWindow.IsOpen(GSWindow.WC_VEHICLE_ORDERS,bus)){this.ReturnTo(11);return;}
+        if(step==14&&!GSWindow.IsOpen(GSWindow.WC_VEHICLE_VIEW,bus)){this.ReturnTo(10);return;}
         while (GSEventController.IsEventWaiting()) {
             local event = GSEventController.GetNextEvent();
             if (step==0 && event.GetEventType()==GSEvent.ET_STORYPAGE_BUTTON_CLICK) {
@@ -146,7 +157,7 @@ class TouchFirstRoute extends GSController {
         // Road/depot/station queries require an explicitly selected road type.
         GSRoad.SetCurrentRoadType(GSRoad.ROADTYPE_ROAD);
         if (this.state == null || !this.state.rawin("step")) this.Prepare();
-        this.ShowStep(); GSViewport.ScrollTo(this.Tile(55,64));
+        this.ShowStep();if(this.state.step==0)GSViewport.ScrollTo(this.Tile(55,64));
         this.Pace();
         while (true) { this.Tick(); this.Sleep(5); }
     }

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Play the bundled lesson with real HID in the recorded project-owned iPad simulator."""
 from pathlib import Path
-import json, subprocess, time
+import argparse, json, subprocess, time
 ROOT=Path(__file__).resolve().parents[1]
 fixture=json.loads((ROOT/'evidence/ipad-simulator.json').read_text());uid=fixture['simulator_id']
 assert fixture['screen_points']==[1180,820] and fixture['observed_interface_orientation']==4
 c=Path(subprocess.check_output(['xcrun','simctl','get_app_container',uid,'org.openttd.reimagined.dev','data'],text=True).strip());state_path=c/'Documents/OpenTTD/native-session.json'
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--stop-after-step',type=int,choices=range(18));args=parser.parse_args()
+record_file=ROOT/'evidence'/('guided-lesson-hid-stages.json' if args.stop_after_step is None else f'guided-lesson-hid-checkpoint-{args.stop_after_step}.json')
 records=[]
 def read():
     s=json.loads(state_path.read_text());assert not s.get('suspended') and time.time()-state_path.stat().st_mtime<2;return s
@@ -23,8 +25,9 @@ def step(n,timeout=25):
         time.sleep(.1)
     else:raise RuntimeError(s.get('tutorial'))
     records.append({'expected_step':n,'observed_step':current(s),'tick':s['tick'],'tutorial':s['tutorial']})
-    (ROOT/'evidence/guided-lesson-hid-stages.json').write_text(json.dumps(records,indent=2))
+    record_file.write_text(json.dumps(records,indent=2))
     print('Verified original lesson step',n,'(observed',current(s),')',flush=True)
+    if args.stop_after_step==n:raise SystemExit(0)
     return s
 def action(*args):subprocess.run(['python3',str(ROOT/'script/qa_native_action.py'),*map(str,args)],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
 def tap(id):action('tap',id)

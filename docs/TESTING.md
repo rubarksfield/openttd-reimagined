@@ -12,7 +12,7 @@ This is an experimental native fork. Build success, simulator play, physical lau
 
 ## Current tutorial acceptance
 
-Original-style reading guide and Story Book instructions are implemented. The lesson uses actual button/window events and original world queries, saves its progress, and highlights the original controls. A fresh iPad simulator run passed every stage 0–17 using actual HID: two stops, correctly connected depot, bus purchase, both orders, movement, passengers and fare income. It also asserted that Story Book transitions and two-finger panning preserve Go To. The dependency-free starter save loads/resumes in unchanged 15.3 with no missing NewGRF or error pause. Earlier QA exercised wrong-depot rejection and saved-stage recovery. Other device/configuration variants remain separate checks.
+Original-style reading guide and Story Book instructions are implemented. The lesson uses actual button/window events and original world queries, saves its progress, and highlights the original controls. A fresh iPad simulator run passed every stage 0–17 using actual HID: two stops, correctly connected depot, bus purchase, both orders, movement, passengers and fare income. It also asserted that Story Book transitions and two-finger panning preserve Go To. The dependency-free starter save loads/resumes in unchanged 15.3 with no missing NewGRF or error pause. QA also exercised wrong-depot rejection and cold saved-stage recovery: the existing bus was reopened without another purchase, its orders were completed and it earned a fare. A fresh 0–17 regression passed after that recovery change. Other device/configuration variants remain separate checks.
 
 ## Still open
 
