@@ -23,3 +23,11 @@ No App Store approval or TestFlight availability is implied. Store metadata, sig
 ## Reproduce
 
 Use the build and check commands in README. Simulator automation reads a locally generated `evidence/ipad-simulator.json` fixture and verifies the simulator is explicitly project-owned. Runtime evidence and all personal saves/device/signing records are intentionally excluded from this public repository. Never run automated construction tests in your real company.
+
+## Build 5 distribution checks
+
+The actual 13-inch iPad simulator renders at both portrait and landscape sizes. All four rotations preserve the active lesson; real caption touches are acknowledged at the expected original coordinates in each orientation. Original road-tool and bus-stop selection still advances coaching after rotation. The signed Release archive includes matching dSYM UUIDs and passes the archive verifier. Apple accepted and processed the upload; build 5 is Missing Compliance, not available to testers.
+
+A clean build 5 install on the 13-inch fixture also passed the complete 0–17 route with an explicit rejection of original engine error windows. A reused document container had retained an obsolete starter; that fixture was fully backed up and reinstalled. Its replacement matches the canonical bundled save. The medium iPhone fixture passed all ten guide pages and began its clean lesson with the road control highlighted.
+
+The simulator accessibility automation service timed out; real HID and native screenshots were used for these checks. A small-phone safe-area scale is applied to QA coordinates using the same transform as the native host. Full physical touch-target/accessibility acceptance remains separate.

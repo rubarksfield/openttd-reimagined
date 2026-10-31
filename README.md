@@ -83,3 +83,9 @@ This work depends on the extraordinary work of the OpenTTD contributors and the 
 Our linked application code, UI patches and tutorial are distributed under **GPL-2.0**, preserving upstream and dependency notices. See [COPYING](COPYING.md) and [THIRD_PARTY](THIRD_PARTY.md). The app icon is AI-generated artwork released with this project; implementation and testing also used substantial Codex assistance. AI-generated concepts are not gameplay evidence.
 
 Publishing source does not by itself settle Apple store terms, downloaded-script review or asset obligations for a future binary release. Store distribution remains a separate gate. Never bundle proprietary TTD resources or redistribute someone else's NewGRF without its permission and required source/notices.
+
+## Distribution preview
+
+Version 0.1.0 build 5 has uploaded to App Store Connect. It is awaiting export-compliance completion and is not yet available to testers or on the App Store. The source preview is public. Distribution archives include current lesson resources, a privacy manifest and UUID-matched crash symbols, with local QA file logging disabled. iPad supports all four orientations; iPhone keeps its landscape layout. Full multitasking and hardware performance acceptance remain open.
+
+[Download the complete preview source package](https://github.com/rubarksfield/openttd-reimagined/releases). It includes exact engine/dependency sources and preferred base-asset sources as well as the application and lesson code. See [encryption review facts](docs/EXPORT-COMPLIANCE.md) for the current TestFlight compliance gate.

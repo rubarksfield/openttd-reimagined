@@ -24,7 +24,10 @@ if time.time()-state_path.stat().st_mtime>2:raise RuntimeError('Runtime widget s
 if state['surface']!=fixture['surface_points']:raise RuntimeError('Observe and update the fixture geometry after resizing')
 cx=w['x']+w['w']/2;cy=w['y']+w['h']/2
 if not (0<=cx<state['surface'][0] and 0<=cy<state['surface'][1]):raise RuntimeError('Widget centre is outside the visible surface')
-origin=fixture['surface_origin'];scene=fixture['screen_points'];pixels=fixture['pixel_size'];point=(origin[0]+cx,origin[1]+cy)
+origin=fixture['surface_origin'];scene=fixture['screen_points'];pixels=fixture['pixel_size'];view=fixture.get('surface_view_points',state['surface'])
+# Small phones can display the engine's 400-unit minimum height in a shorter
+# safe-area view. Invert the native host's actual framebuffer-to-view transform.
+point=(origin[0]+cx*view[0]/state['surface'][0],origin[1]+cy*view[1]/state['surface'][1])
 driver=a.driver_root or (pathlib.Path(os.environ['SERVE_SIM_PACKAGE']) if os.environ.get('SERVE_SIM_PACKAGE') else None)
 if driver is None:
  candidates=[p.parent for p in (pathlib.Path.home()/'.npm/_npx').glob('*/node_modules/serve-sim/package.json') if json.loads(p.read_text()).get('version')=='0.1.48']

@@ -18,4 +18,7 @@ xcodebuild -project build/ipad-store-xcode/OpenTTDPad.xcodeproj -scheme OpenTTDP
  -configuration Release -destination 'generic/platform=iOS' \
  -archivePath "$store_root/OpenTTDReimagined.xcarchive" \
  -allowProvisioningUpdates DEVELOPMENT_TEAM="$OPENTTD_DEVELOPMENT_TEAM" -jobs 3 archive
+# Custom DerivedData products avoid File Provider signing problems, but CMake
+# leaves the generated dSYM there instead of collecting it into the archive.
+python3 script/stage_archive_symbols.py "$store_root/OpenTTDReimagined.xcarchive" "$store_root/Products/Release-iphoneos/OpenTTDPad.app.dSYM"
 python3 script/verify_store_archive.py "$store_root/OpenTTDReimagined.xcarchive" --bundle-identifier "$OPENTTD_BUNDLE_IDENTIFIER"

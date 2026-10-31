@@ -52,6 +52,10 @@ if(CMAKE_GENERATOR STREQUAL "Xcode")
  # An archive must contain the app in Products/Applications. CMake's default
  # empty install path otherwise produces a successful but empty generic archive.
  set_target_properties(OpenTTDPad PROPERTIES XCODE_ATTRIBUTE_SKIP_INSTALL NO XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)")
+ set_target_properties(OpenTTDPad PROPERTIES XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
+ foreach(symbol_target OpenTTDPad openttd_engine native_content_import liblzma archive_static)
+  set_target_properties(${symbol_target} PROPERTIES XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS YES)
+ endforeach()
  foreach(native_library openttd_engine native_content_import liblzma archive_static)
   set_target_properties(${native_library} PROPERTIES XCODE_ATTRIBUTE_SKIP_INSTALL YES)
  endforeach()

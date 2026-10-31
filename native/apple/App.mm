@@ -193,7 +193,7 @@ static BOOL InstallMissingResources(NSFileManager *fm, NSURL *bundleData, NSURL 
 -(BOOL)prefersStatusBarHidden{return YES;}
 -(void)viewDidAppear:(BOOL)animated{[super viewDidAppear:animated];NSURL *documents=[NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject;ConfigureNativeContentImport(self,[documents URLByAppendingPathComponent:@"OpenTTD" isDirectory:YES]);ConfigureNativeTouchTutorial(self);}
 -(BOOL)prefersHomeIndicatorAutoHidden{return YES;}
--(UIInterfaceOrientationMask)supportedInterfaceOrientations{return UIInterfaceOrientationMaskLandscape;}
+-(UIInterfaceOrientationMask)supportedInterfaceOrientations{return UIDevice.currentDevice.userInterfaceIdiom==UIUserInterfaceIdiomPad?UIInterfaceOrientationMaskAll:UIInterfaceOrientationMaskLandscape;}
 -(UIInterfaceOrientation)preferredInterfaceOrientationForPresentation{return UIInterfaceOrientationLandscapeLeft;}
 @end
 @interface OTTDSceneDelegate:UIResponder<UIWindowSceneDelegate>

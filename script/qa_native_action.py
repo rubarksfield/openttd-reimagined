@@ -3,14 +3,14 @@
 from pathlib import Path
 import argparse, json, subprocess, time
 ROOT=Path(__file__).resolve().parents[1]
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=['inspect','tap','tile','drag','move','wait-step']);p.add_argument('values',nargs='*');a=p.parse_args()
-fixture=json.loads((ROOT/'evidence/ipad-simulator.json').read_text());uid=fixture['simulator_id']
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=['inspect','tap','tile','drag','move','wait-step']);p.add_argument('values',nargs='*');p.add_argument('--simulator-record',type=Path,default=ROOT/'evidence/ipad-simulator.json');a=p.parse_args()
+fixture=json.loads(a.simulator_record.read_text());uid=fixture['simulator_id']
 devices=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','-j'],text=True))
 assert any(d['udid']==uid and d['name'].startswith('OpenTTD ') for group in devices['devices'].values() for d in group),'Use an owned fixture'
 container=Path(subprocess.check_output(['xcrun','simctl','get_app_container',uid,'org.openttd.reimagined.dev','data'],text=True).strip());state=container/'Documents/OpenTTD/native-session.json'
 def read():return json.loads(state.read_text())
 def plain(s):return ''.join(c for c in s if not 0xe000<=ord(c)<=0xf8ff)
-if a.action=='tap':subprocess.run(['python3',str(ROOT/'script/tap_native_widget.py'),'--id',a.values[0]],cwd=ROOT,check=True)
+if a.action=='tap':subprocess.run(['python3',str(ROOT/'script/tap_native_widget.py'),'--id',a.values[0],'--simulator-record',str(a.simulator_record)],cwd=ROOT,check=True)
 elif a.action in ['tile','drag','move']:
     d=read();assert not d.get('suspended') and time.time()-state.stat().st_mtime<2
     points=[]
