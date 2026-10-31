@@ -1,17 +1,29 @@
 --- a/src/story_gui.cpp
 +++ b/src/story_gui.cpp
-@@ -33,6 +33,10 @@
+@@ -33,6 +33,11 @@
  
  #include "safeguards.h"
  
 +#ifdef OTTD_TOUCH_UI
 +extern uint _openttd_touch_target;
++extern void FocusFirstRouteTarget(TileIndex tile);
 +#endif
 +
  static CursorID TranslateStoryPageButtonCursor(StoryPageButtonCursor cursor);
  
  typedef GUIList<const StoryPage*> GUIStoryPageList;
-@@ -332,7 +336,11 @@
+@@ -325,14 +330,22 @@
+ 			case SPET_GOAL:
+ 			case SPET_LOCATION: {
+ 				Dimension sprite_dim = GetSpriteSize(GetPageElementSprite(pe));
++				#ifdef OTTD_TOUCH_UI
++				return std::max<uint>(_openttd_touch_target, sprite_dim.height);
++#else
+ 				return sprite_dim.height;
++#endif
+ 			}
+ 
+ 			case SPET_BUTTON_PUSH:
  			case SPET_BUTTON_TILE:
  			case SPET_BUTTON_VEHICLE: {
  				Dimension dim = GetStringBoundingBox(pe.text.GetDecodedString(), FS_NORMAL);
@@ -23,7 +35,17 @@
  			}
  
  			default:
-@@ -586,6 +594,22 @@
+@@ -536,6 +549,9 @@
+ 				break;
+ 
+ 			case SPET_LOCATION:
++#ifdef OTTD_TOUCH_UI
++				FocusFirstRouteTarget((TileIndex)pe.referenced_id);
++#endif
+ 				if (_ctrl_pressed) {
+ 					ShowExtraViewportWindow((TileIndex)pe.referenced_id);
+ 				} else {
+@@ -586,6 +602,22 @@
  	}
  
  public:
@@ -34,7 +56,7 @@
 +		this->EnsureStoryPageElementLayout();
 +		const Rect clip = this->GetWidget<NWidgetBase>(WID_SB_PAGE_PANEL)->GetCurrentRect().Shrink(WidgetDimensions::scaled.frametext).Translate(this->left, this->top);
 +		for (const auto &ce : this->layout_cache) {
-+			if (ce.pe->type != SPET_BUTTON_PUSH && ce.pe->type != SPET_BUTTON_TILE && ce.pe->type != SPET_BUTTON_VEHICLE) continue;
++			if (ce.pe->type != SPET_LOCATION && ce.pe->type != SPET_BUTTON_PUSH && ce.pe->type != SPET_BUTTON_TILE && ce.pe->type != SPET_BUTTON_VEHICLE) continue;
 +			Rect rect = ce.bounds.Translate(clip.left, clip.top - this->vscroll->GetPosition());
 +			--rect.bottom; --rect.right;
 +			if (rect.left < clip.left || rect.top < clip.top || rect.right > clip.right || rect.bottom > clip.bottom) continue;
@@ -46,7 +68,7 @@
  	StoryBookWindow(WindowDesc &desc, WindowNumber window_number) : Window(desc)
  	{
  		this->CreateNestedTree();
-@@ -629,7 +653,11 @@
+@@ -629,7 +661,11 @@
  	void SetSelectedPage(StoryPageID page_index)
  	{
  		if (this->selected_page_id != page_index) {
@@ -58,7 +80,7 @@
  			this->active_button_id = StoryPageElementID::Invalid();
  			this->selected_page_id = page_index;
  			this->RefreshSelectedPage();
-@@ -971,6 +999,13 @@
+@@ -971,6 +1007,13 @@
  	{},
  	_nested_story_book_widgets
  );
@@ -72,7 +94,7 @@
  
  static CursorID TranslateStoryPageButtonCursor(StoryPageButtonCursor cursor)
  {
-@@ -1044,6 +1079,19 @@
+@@ -1044,6 +1087,19 @@
  {
  	if (!Company::IsValidID(company)) company = (CompanyID)CompanyID::Invalid();
  

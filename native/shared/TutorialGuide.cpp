@@ -11,6 +11,10 @@
 #include "gui.h"
 #include "company_base.h"
 #include "error.h"
+#include "game/game.hpp"
+#include "game/game_info.hpp"
+#include "story_base.h"
+#include "viewport_func.h"
 #include "table/strings.h"
 #include "3rdparty/nlohmann/json.hpp"
 #include <fstream>
@@ -71,4 +75,35 @@ void VisitFirstRouteGuideText(const std::function<void(const Rect &,const std::s
  const auto &p=w->pages[w->page];std::string text=p.value("title","")+"\n\n"+p.value("body","");
  int x=w->left+int(body->pos_x),y=w->top+int(body->pos_y);
  visitor({x,y,x+int(body->current_x)-1,y+int(body->current_y)-1},text);
+}
+
+namespace {
+TileIndex first_route_target = INVALID_TILE;
+std::string first_route_target_label;
+}
+TileIndex FirstRouteTargetTile(){return first_route_target;}
+void FocusFirstRouteTarget(TileIndex tile){
+ if(tile!=first_route_target||tile==INVALID_TILE)return;
+ if(auto *window=GetMainWindow();window&&window->viewport){
+  while(window->viewport->zoom>ZoomLevel::In2x&&DoZoomInOutWindow(ZOOM_IN,window)){}
+  ScrollMainWindowToTile(tile);
+ }
+}
+std::string_view FirstRouteTargetLabel(){return first_route_target_label;}
+void RefreshFirstRouteTarget(){
+ TileIndex target=INVALID_TILE;std::string label;
+ if(_game_mode==GM_NORMAL)if(auto *info=Game::GetInfo();info&&info->GetName()=="Touch First Route"){
+  for(const auto *page:StoryPage::Iterate())if(page->title.GetDecodedString()=="First route - learn by playing"){
+   for(const auto *element:StoryPageElement::Iterate())if(element->page==page->index&&element->type==SPET_LOCATION){
+    auto text=element->text.GetDecodedString();
+    if(text=="Show build tile"||text=="Show depot tile"||text=="Show destination tile"){
+     target=TileIndex(element->referenced_id);
+     label=text=="Show build tile"?"BUILD HERE":text=="Show depot tile"?"OPEN THIS DEPOT":"CHOOSE THIS STOP";
+    }
+   }
+  }
+ }
+ if(target!=first_route_target||label!=first_route_target_label){
+  first_route_target=target;first_route_target_label=label;FocusFirstRouteTarget(target);MarkWholeScreenDirty();
+ }
 }

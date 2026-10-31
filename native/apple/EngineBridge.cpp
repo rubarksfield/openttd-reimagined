@@ -234,7 +234,7 @@ class IPadVideo final:public VideoDriver {
    data["qa_tiles"]=nlohmann::json::array();
    if(auto *main=GetMainWindow();main&&main->viewport){
     const auto &v=*main->viewport;
-    for(auto [x,y]:{std::pair{32,64},{80,64},{34,64},{78,64},{48,65},{28,64},{84,64}}){
+    for(auto [x,y]:{std::pair{32,64},{80,64},{34,64},{78,64},{48,65},{28,64},{84,64},{35,64},{49,65}}){
      auto point=RemapCoords2(x*TILE_SIZE+TILE_SIZE/2,y*TILE_SIZE+TILE_SIZE/2);
      int sx=UnScaleByZoom(point.x-v.virtual_left,v.zoom)+v.left,sy=UnScaleByZoom(point.y-v.virtual_top,v.zoom)+v.top;
      data["qa_tiles"].push_back({{"tile",{x,y}},{"point",{sx,sy}},{"visible",sx>=0&&sy>=0&&sx<_screen.width&&sy<_screen.height&&FindWindowFromPt(sx,sy)==main}});
@@ -261,7 +261,10 @@ class IPadVideo final:public VideoDriver {
     for(size_t i=start;i<log.size();++i)data["tutorial"]["log"].push_back({{"type",int(log[i].type)},{"text",log[i].text}});
    }
    for(const auto *page:StoryPage::Iterate())if(page->title.GetDecodedString()=="First route - learn by playing")
-    for(const auto *element:StoryPageElement::Iterate())if(element->page==page->index&&element->type==SPET_TEXT)data["tutorial"]["text"]=element->text.GetDecodedString();
+    for(const auto *element:StoryPageElement::Iterate())if(element->page==page->index){
+     if(element->type==SPET_TEXT)data["tutorial"]["text"]=element->text.GetDecodedString();
+     if(element->type==SPET_LOCATION)data["tutorial"]["target"]={{"tile",element->referenced_id},{"label",element->text.GetDecodedString()}};
+    }
   }
   for(const auto &grf:_grfconfig)data["newgrfs"].push_back({{"name",grf->GetName()},{"grfid",grf->ident.grfid},{"file",grf->filename},{"status",int(grf->status)}});
 #ifdef OTTD_RUNTIME_EVIDENCE
@@ -345,7 +348,7 @@ public:
   while(!_exit_game){
    // Suspension must still drain the owned event queue so foregrounding can resume.
    if(suspended){std::deque<Event> work;{std::lock_guard<std::mutex> guard(events_mutex);work.swap(events);}for(auto &e:work)Process(e);std::this_thread::sleep_for(std::chrono::milliseconds(20));next_game_tick=next_draw_tick=std::chrono::steady_clock::now();continue;}
-   RefreshContent();Tick();SleepTillNextTick();
+   RefreshContent();RefreshFirstRouteTarget();Tick();SleepTillNextTick();
   }
  }
  bool PollEvent()override{

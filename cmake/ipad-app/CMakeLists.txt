@@ -46,7 +46,7 @@ add_executable(OpenTTDPad MACOSX_BUNDLE "${PROJECT_ROOT}/native/apple/App.mm" "$
 set_source_files_properties("${PROJECT_ROOT}/native/apple/Tutorial/first-steps.json" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 target_sources(OpenTTDPad PRIVATE "${PROJECT_ROOT}/native/apple/PrivacyInfo.xcprivacy")
 set_source_files_properties("${PROJECT_ROOT}/native/apple/PrivacyInfo.xcprivacy" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-set_source_files_properties("${UPSTREAM}/src/story_gui.cpp" PROPERTIES COMPILE_DEFINITIONS OTTD_TOUCH_UI)
+set_source_files_properties("${UPSTREAM}/src/story_gui.cpp" "${UPSTREAM}/src/viewport.cpp" PROPERTIES COMPILE_DEFINITIONS OTTD_TOUCH_UI)
 if(CMAKE_GENERATOR STREQUAL "Xcode")
  set_property(GLOBAL PROPERTY XCODE_EMIT_EFFECTIVE_PLATFORM_NAME ON)
  # An archive must contain the app in Products/Applications. CMake's default

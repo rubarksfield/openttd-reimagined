@@ -1,0 +1,20 @@
+##plural 0
+
+STR_STEP_0 :YOUR FIRST ROUTE{}Build two stops, buy a bus and earn a fare.{}Press Begin; follow the glowing controls. The clock pauses while you build. Close this page to use the map; the story-book button reopens it.
+STR_STEP_1 : 1 / 17 - OPEN ROAD CONSTRUCTION{}{}Tap the highlighted road construction button on the top toolbar. If a menu opens, choose Road construction. You can drag the title bar of this lesson out of the way. Reopen it with the story-book button if you close it.
+STR_STEP_2 : 2 / 17 - CHOOSE BUS STOPS{}{}Tap the highlighted bus-stop tool in the road toolbar. A bus carries passengers; a truck loading bay carries other cargo.
+STR_STEP_3 : 3 / 17 - CHOOSE A DRIVE-THROUGH STOP{}{}In the stop picker, choose the drive-through picture that follows the existing road. Drag the picker title bar aside if it covers the map. Place the stop on the sign marked 1. Meadow bus stop. The game will show any placement error. Try again if needed.
+STR_STEP_4 : 4 / 17 - BUILD THE SECOND STOP{}{}Keep the bus-stop tool selected. Place a second drive-through stop at 2. Willow bus stop, along the same road. Pinch to zoom; use two fingers to pan with a tool active.
+STR_STEP_5 : 5 / 17 - CHOOSE A ROAD DEPOT{}{}Tap the highlighted depot button in the road construction toolbar. The depot is the workshop where you buy and service road vehicles.
+STR_STEP_6 : 6 / 17 - BUILD THE DEPOT{}{}Build at the sign marked 3. Bus depot. Choose the orientation whose entrance faces the road immediately above it. Wrong direction? Remove and rebuild it; the lesson waits for a correctly connected depot.
+STR_STEP_7 : 7 / 17 - OPEN THE DEPOT{}{}Close the construction tool, then tap the depot you just built. Its vehicle window will open.
+STR_STEP_8 : 8 / 17 - NEW VEHICLES{}{}Tap the highlighted New Vehicles button in the depot window.
+STR_STEP_9 : 9 / 17 - BUY ONE PASSENGER BUS{}{}Select the MPS Regal Bus and tap Buy Vehicle. Check that it carries passengers. The lesson waits for a real passenger bus owned by your company.
+STR_STEP_10 : 10 / 17 - OPEN YOUR BUS{}{}Close the purchase list. Tap the bus inside the depot to open its vehicle window. It is stopped safely in the depot.
+STR_STEP_11 : 11 / 17 - OPEN ORDERS{}{}Tap the highlighted Orders button in the bus window. Orders tell a vehicle which stations to visit.
+STR_STEP_12 : 12 / 17 - FIRST DESTINATION{}{}Select Go To if it is not already pressed, then tap the Meadow stop on the map. Its station name must appear in the bus order list. If a window covers the stop, move it or pan with two fingers.
+STR_STEP_13 : 13 / 17 - SECOND DESTINATION{}{}With Go To selected (press it if needed), tap the Willow stop. Check that both stops are listed. The bus repeats its orders automatically.
+STR_STEP_14 : 14 / 17 - START THE BUS{}{}Close the orders window. Tap the highlighted red Stopped bar in the bus window. Watch the bus leave the depot. Construction, connections, running costs and movement use the original game rules.
+STR_STEP_15 : 15 / 17 - PICK UP PASSENGERS{}{}Watch the bus visit its stops. The lesson waits until passengers are actually aboard. Demand takes time. The highlighted double arrows toggle fast-forward to shorten the wait. If it stays empty, check that both stops accept passengers and the bus can reach them.
+STR_STEP_16 : 16 / 17 - YOUR FIRST FARE{}{}Let the bus deliver its passengers to the other stop. The lesson waits for real passenger income. Use the highlighted fast-forward control if you want to shorten the wait. Fares are income; vehicle profit also includes running costs.
+STR_STEP_17 : ROUTE COMPLETE!{}{}You built stations and a depot, bought a passenger bus, configured both destinations and earned a real fare.{}{}Keep playing and expand, or save using the original save menu. The same build / buy / orders / run loop applies to trains, ships and aircraft. This world and the lesson progress save together.

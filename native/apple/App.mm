@@ -103,6 +103,7 @@ static BOOL InstallMissingResources(NSFileManager *fm, NSURL *bundleData, NSURL 
   }
   if(!InstallMissingResources(fm,bundledData,root,&error)){_loading.text=[NSString stringWithFormat:@"Game resource update failed: %@",error.localizedDescription];return;}
   if(!InstallClassicMenuIfUnmodified(bundledData,root,&error)){_loading.text=error.localizedDescription;return;}
+  if(!InstallTutorialIfUnmodified(bundledData,root,&error)){_loading.text=error.localizedDescription;return;}
   if(!RecoverNativeContentImports(root,&error)){_loading.text=error.localizedDescription;return;}
   ConfigureNativeContentImport(self.window.rootViewController,root);
   NSURL *config=[root URLByAppendingPathComponent:@"openttd.cfg"];

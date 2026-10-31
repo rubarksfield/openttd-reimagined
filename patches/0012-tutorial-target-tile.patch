@@ -1,0 +1,72 @@
+--- a/src/viewport.cpp
++++ b/src/viewport.cpp
+@@ -101,6 +101,12 @@
+ 
+ #include "safeguards.h"
+ 
++#ifdef OTTD_TOUCH_UI
++#include "transparency.h"
++extern TileIndex FirstRouteTargetTile();
++extern std::string_view FirstRouteTargetLabel();
++#endif
++
+ Point _tile_fract_coords;
+ 
+ 
+@@ -1828,10 +1834,34 @@
+ 	_vd.dpi.dst_ptr = BlitterFactory::GetCurrentBlitter()->MoveTo(_cur_dpi->dst_ptr, x - _cur_dpi->left, y - _cur_dpi->top);
+ 	AutoRestoreBackup dpi_backup(_cur_dpi, &_vd.dpi);
+ 
++#ifdef OTTD_TOUCH_UI
++	{
++		// Reveal a lesson tile behind tall houses using stock transparency.
++		// Scope the option to terrain drawing; never persist a client preference.
++		auto transparency = _transparency_opt;
++		if (IsValidTile(FirstRouteTargetTile())) SetBit(transparency, TO_HOUSES);
++		AutoRestoreBackup transparency_backup(_transparency_opt, transparency);
++		ViewportAddLandscape();
++	}
++#else
+ 	ViewportAddLandscape();
++#endif
+ 	ViewportAddVehicles(&_vd.dpi);
+ 
+ 	ViewportAddKdtreeSigns(&_vd.dpi);
++#ifdef OTTD_TOUCH_UI
++	if (TileIndex target = FirstRouteTargetTile(); IsValidTile(target)) {
++		Point point = RemapCoords2(TileX(target) * TILE_SIZE + TILE_SIZE / 2, TileY(target) * TILE_SIZE + TILE_SIZE / 2);
++		ViewportSign label{};
++		label.center = point.x;
++		label.top = point.y - ScaleByZoom(GetCharacterHeight(FS_NORMAL) + 16, _vd.dpi.zoom);
++		label.width_normal = GetStringBoundingBox(FirstRouteTargetLabel()).width + WidgetDimensions::scaled.fullbevel.Horizontal() + 8;
++		if (auto *text = ViewportAddString(&_vd.dpi, &label, {ViewportStringFlag::ColourRect}, COLOUR_LIGHT_BLUE)) *text = FirstRouteTargetLabel();
++		label.top = point.y - ScaleByZoom(14, _vd.dpi.zoom);
++		label.width_normal = GetStringBoundingBox("v").width + 4;
++		if (auto *text = ViewportAddString(&_vd.dpi, &label, {}, INVALID_COLOUR)) *text = "v";
++	}
++#endif
+ 
+ 	DrawTextEffects(&_vd.dpi);
+ 
+@@ -1860,6 +1890,21 @@
+ 		dp.top = y;
+ 		vp.overlay->Draw(&dp);
+ 	}
++
++#ifdef OTTD_TOUCH_UI
++	// This coaching outline is above scenery and has no sign/input hit target.
++	if (TileIndex target = FirstRouteTargetTile(); IsValidTile(target)) {
++		dp.left = UnScaleByZoom(_vd.dpi.left, zoom);
++		dp.top = UnScaleByZoom(_vd.dpi.top, zoom);
++		int tx = TileX(target) * TILE_SIZE, ty = TileY(target) * TILE_SIZE;
++		std::array<Point, 4> corners{RemapCoords2(tx, ty), RemapCoords2(tx + TILE_SIZE, ty), RemapCoords2(tx + TILE_SIZE, ty + TILE_SIZE), RemapCoords2(tx, ty + TILE_SIZE)};
++		for (size_t i = 0; i < corners.size(); ++i) {
++			Point a = corners[i], b = corners[(i + 1) % corners.size()];
++			GfxDrawLine(UnScaleByZoom(a.x, zoom), UnScaleByZoom(a.y, zoom), UnScaleByZoom(b.x, zoom), UnScaleByZoom(b.y, zoom), PC_BLACK, 5);
++			GfxDrawLine(UnScaleByZoom(a.x, zoom), UnScaleByZoom(a.y, zoom), UnScaleByZoom(b.x, zoom), UnScaleByZoom(b.y, zoom), PC_LIGHT_BLUE, 3);
++		}
++	}
++#endif
+ 
+ 	if (!_vd.string_sprites_to_draw.empty()) {
+ 		/* translate to world coordinates */

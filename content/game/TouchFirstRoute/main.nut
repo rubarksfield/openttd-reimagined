@@ -4,6 +4,8 @@
  */
 class TouchFirstRoute extends GSController {
     state = null;
+    placement_signature = null;
+    placement_feedback = null;
     function Tile(x, y) { return GSMap.GetTileIndex(x, y); }
     function Save() { return this.state == null ? {} : this.state; }
     function Load(version, data) { this.state = data; }
@@ -20,7 +22,6 @@ class TouchFirstRoute extends GSController {
         this.Require(first!=-1&&second!=-1,"the authored town locations");
         for(local x=28;x<=84;x++)this.Require(GSRoad.IsRoadTile(this.Tile(x,64)),"the prepared public road");
         GSTown.SetName(first,"Meadow");GSTown.SetName(second,"Willow");
-        foreach(marker in [[34,64,"1. Meadow bus stop"],[78,64,"2. Willow bus stop"],[48,65,"3. Bus depot (face road)"]])GSSign.BuildSign(this.Tile(marker[0],marker[1]),marker[2]);
         {local company=GSCompanyMode(0);GSCompany.SetName("Meadow Transport");}
         this.Require(GSGameSettings.SetValue("construction.command_pause_level",3),"enable the original paused-building setting for this lesson");
         this.state={step=0,page=-1,body=-1,button=-1,loaded_passengers=false};
@@ -28,16 +29,16 @@ class TouchFirstRoute extends GSController {
     }
     function Text() {
         local ids = [GSText.STR_STEP_0, GSText.STR_STEP_1, GSText.STR_STEP_2, GSText.STR_STEP_3, GSText.STR_STEP_4, GSText.STR_STEP_5, GSText.STR_STEP_6, GSText.STR_STEP_7, GSText.STR_STEP_8, GSText.STR_STEP_9, GSText.STR_STEP_10, GSText.STR_STEP_11, GSText.STR_STEP_12, GSText.STR_STEP_13, GSText.STR_STEP_14, GSText.STR_STEP_15, GSText.STR_STEP_16, GSText.STR_STEP_17];
-        return GSText(ids[this.state.step]);
+        return this.placement_feedback == null ? GSText(ids[this.state.step]) : GSText(this.placement_feedback);
     }
     function ShowStep() {
-        // Labels are placement aids. Remove only our exact markers once built,
-        // so their viewport hit targets cannot cover a depot or order target.
+        // Retire only the old bundled labels at their original coordinates.
+        // Labels used to intercept construction taps and did not identify a tile.
         foreach(id,unused in GSSignList()) {
-            local name=GSSign.GetName(id);
-            if ((this.state.step>=4&&name=="1. Meadow bus stop") ||
-                (this.state.step>=5&&name=="2. Willow bus stop") ||
-                (this.state.step>=7&&name=="3. Bus depot (face road)")) GSSign.RemoveSign(id);
+            local name=GSSign.GetName(id),tile=GSSign.GetLocation(id);
+            if ((name=="1. Meadow bus stop"&&tile==this.Tile(34,64)) ||
+                (name=="2. Willow bus stop"&&tile==this.Tile(78,64)) ||
+                (name=="3. Bus depot (face road)"&&tile==this.Tile(48,65))) GSSign.RemoveSign(id);
         }
         if (this.state.page == -1 || !GSStoryPage.IsValidStoryPage(this.state.page)) {
             this.state.page = GSStoryPage.New(0, "First route - learn by playing");
@@ -45,12 +46,68 @@ class TouchFirstRoute extends GSController {
             local format = GSStoryPage.MakePushButtonReference(GSStoryPage.SPBC_GREEN, 0);
             this.state.button = GSStoryPage.NewElement(this.state.page, GSStoryPage.SPET_BUTTON_PUSH, format, "Begin lesson");
         } else this.Require(GSStoryPage.UpdateElement(this.state.body, 0, this.Text()), "update lesson text");
-        if (this.state.step > 0 && GSStoryPage.IsValidStoryPageElement(this.state.button)) GSStoryPage.RemoveElement(this.state.button);
+        if (this.state.step > 0) {
+            if (GSStoryPage.IsValidStoryPageElement(this.state.button)) GSStoryPage.RemoveElement(this.state.button);
+            this.state.button=-1;
+        }
+        this.UpdateLocation();
         GSStoryPage.Show(this.state.page);
         if(this.state.step==3||this.state.step==12) GSViewport.ScrollTo(this.Tile(34,64));
         else if(this.state.step==4||this.state.step==13) GSViewport.ScrollTo(this.Tile(78,64));
         else if(this.state.step>=5&&this.state.step<=11) GSViewport.ScrollTo(this.Tile(48,65));
         GSLog.Info("TOUCH_TUTORIAL_STEP " + this.state.step);
+    }
+    function Target() {
+        local step=this.state.step;
+        if(step==3||step==12)return this.Tile(34,64);
+        if(step==4||step==13)return this.Tile(78,64);
+        if(step>=5&&step<=11)return this.Tile(48,65);
+        return -1;
+    }
+    function UpdateLocation() {
+        // A stock Story Book location link owns the target. Native presentation
+        // reads this reference to draw a non-interactive original tile outline.
+        // Old version-one saves gain the link without discarding any progress.
+        if(!this.state.rawin("location"))this.state.location <- -1;
+        local target=this.Target(),label="Show build tile";
+        if(this.state.step>=7)label=this.state.step<=11?"Show depot tile":"Show destination tile";
+        if(target==-1) {
+            if(GSStoryPage.IsValidStoryPageElement(this.state.location))GSStoryPage.RemoveElement(this.state.location);
+            this.state.location=-1;
+        } else if(GSStoryPage.IsValidStoryPageElement(this.state.location)) {
+            this.Require(GSStoryPage.UpdateElement(this.state.location,target,label),"update target location");
+        } else this.state.location=GSStoryPage.NewElement(this.state.page,GSStoryPage.SPET_LOCATION,target,label);
+    }
+    function ObservePlacement() {
+        // Observe completed original structures, including joined station tiles.
+        // Do not run a command, undo a purchase, or erase a player's extra build.
+        local signature="",wrong=false;
+        {
+            local company=GSCompanyMode(0);
+            foreach(station,unused in GSStationList(GSStation.STATION_BUS_STOP)) {
+                foreach(tile,unused2 in GSTileList_StationType(station,GSStation.STATION_BUS_STOP)) {
+                    local front=GSRoad.GetRoadStationFrontTile(tile);
+                    local expected=(tile==this.Tile(34,64)||tile==this.Tile(78,64))&&GSRoad.IsDriveThroughRoadStationTile(tile)&&(front==tile-1||front==tile+1);
+                    if((this.state.step==3||this.state.step==4)&&!expected){signature+="s"+tile+":"+front+";";wrong=true;}
+                }
+            }
+            foreach(tile,unused in GSDepotList(GSTile.TRANSPORT_ROAD)) {
+                local front=GSRoad.GetRoadDepotFrontTile(tile);
+                if(this.state.step==6&&(tile!=this.Tile(48,65)||front!=this.Tile(48,64))){signature+="d"+tile+":"+front+";";wrong=true;}
+            }
+        }
+        if(signature==this.placement_signature)return;
+        this.placement_signature=signature;
+        if(this.state.step!=3&&this.state.step!=4&&this.state.step!=6)return;
+        local target=this.Target(),blocked=GSRoad.IsRoadStationTile(target)||GSRoad.IsRoadDepotTile(target);
+        if(!wrong&&!blocked){
+            if(this.placement_feedback!=null){this.placement_feedback=null;this.Require(GSStoryPage.UpdateElement(this.state.body,0,this.Text()),"restore placement guidance");}
+            return;
+        }
+        this.placement_feedback=blocked?GSText.STR_PLACEMENT_WRONG_DIRECTION:GSText.STR_PLACEMENT_ELSEWHERE;
+        this.Require(GSStoryPage.UpdateElement(this.state.body,0,this.Text()),"explain placement");
+        GSStoryPage.Show(this.state.page);GSViewport.ScrollTo(target);
+        GSLog.Info("TOUCH_TUTORIAL_PLACEMENT_HELP " + this.state.step);
     }
     function Highlight(window, number, widget) {
         if (GSWindow.IsOpen(window, number)) GSWindow.Highlight(window, number, widget, GSWindow.TC_YELLOW);
@@ -80,8 +137,8 @@ class TouchFirstRoute extends GSController {
         }
     }
     function Pace() { if(this.state.step<14) GSGame.Pause();else GSGame.Unpause(); }
-    function Advance() { this.ClearHighlights(); this.state.step++; this.ShowStep();this.Pace(); }
-    function ReturnTo(step) { this.ClearHighlights();this.state.step=step;this.ShowStep();this.Pace(); }
+    function Advance() { this.ClearHighlights(); this.placement_feedback=null; this.state.step++; this.ShowStep();this.Pace(); }
+    function ReturnTo(step) { this.ClearHighlights();this.placement_feedback=null;this.placement_signature=null;this.state.step=step;this.ShowStep();this.Pace(); }
     function Bus() {
         local company = GSCompanyMode(0);
         foreach (id, unused in GSVehicleList()) if (GSVehicle.GetVehicleType(id)==GSVehicle.VT_ROAD && GSVehicle.GetCapacity(id,0)>0) return id;
@@ -130,9 +187,9 @@ class TouchFirstRoute extends GSController {
         }
         if (step==1) { if(this.RoadTools()) this.Advance(); }
         else if (step==2) { if(this.RoadTools()) this.Highlight(GSWindow.WC_BUILD_TOOLBAR,1,GSWindow.WID_ROT_BUS_STATION); if(GSWindow.IsOpen(GSWindow.WC_BUS_STATION,1)) this.Advance(); }
-        else if (step==3 || step==4) { this.StopTools(); if(this.HasStop(34)&&(step==3||this.HasStop(78))) this.Advance(); }
+        else if (step==3 || step==4) { this.StopTools(); if(this.HasStop(34)&&(step==3||this.HasStop(78))) this.Advance(); else this.ObservePlacement(); }
         else if (step==5) { this.DepotTools(); if(GSWindow.IsOpen(GSWindow.WC_BUILD_DEPOT,1)) this.Advance(); }
-        else if (step==6) { this.DepotTools(); if(GSRoad.IsRoadDepotTile(depot)&&GSRoad.GetRoadDepotFrontTile(depot)==this.Tile(48,64)) this.Advance(); }
+        else if (step==6) { this.DepotTools(); if(GSRoad.IsRoadDepotTile(depot)&&GSRoad.GetRoadDepotFrontTile(depot)==this.Tile(48,64)) this.Advance(); else this.ObservePlacement(); }
         else if (step==7 && GSWindow.IsOpen(GSWindow.WC_VEHICLE_DEPOT,depot)) this.Advance();
         else if (step==8) { this.Highlight(GSWindow.WC_VEHICLE_DEPOT,depot,GSWindow.WID_D_BUILD); if(GSWindow.IsOpen(GSWindow.WC_BUILD_VEHICLE,depot)) this.Advance(); }
         else if (step==9) { this.Highlight(GSWindow.WC_BUILD_VEHICLE,depot,GSWindow.WID_BV_BUILD); if(bus!=-1) this.Advance(); }

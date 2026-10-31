@@ -31,3 +31,11 @@ The actual 13-inch iPad simulator renders at both portrait and landscape sizes. 
 A clean build 5 install on the 13-inch fixture also passed the complete 0–17 route with an explicit rejection of original engine error windows. A reused document container had retained an obsolete starter; that fixture was fully backed up and reinstalled. Its replacement matches the canonical bundled save. The medium iPhone fixture passed all ten guide pages and began its clean lesson with the road control highlighted.
 
 The simulator accessibility automation service timed out; real HID and native screenshots were used for these checks. A small-phone safe-area scale is applied to QA coordinates using the same transform as the native host. Full physical touch-target/accessibility acceptance remains separate.
+
+## Build 6 placement recovery
+
+Run `python3 script/qa_first_route.py --simulator-record evidence/store-ipad-simulator.json --exercise-placement-errors` from an owned iPad simulator's main menu, after observing its current geometry. This sends real HID through the original interface, deliberately builds a stop and depot on adjacent wrong tiles, builds a wrongly facing depot on the correct tile, repairs it through the original bulldozer, and completes all 18 stages through passenger income. Evidence includes the live Story Book target reference and the close-up camera. No simulation commands are injected.
+
+`python3 script/test_tutorial_resource_update.py` checks the actual native resource updater with the exact shipped lesson files, custom scripts/translations/metadata, symlinks, partial updates and save preservation under address/undefined sanitizers. `python3 script/test_managed_resources.py` checks the existing title migration.
+
+The build 6 simulator route and signed device build pass. Physical-device acceptance of the placement fix is pending. The prior phone acceptance does not establish a complete build 6 phone playthrough.

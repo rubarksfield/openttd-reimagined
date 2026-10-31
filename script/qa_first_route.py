@@ -3,7 +3,7 @@
 from pathlib import Path
 import argparse, json, subprocess, time
 ROOT=Path(__file__).resolve().parents[1]
-parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--stop-after-step',type=int,choices=range(18));parser.add_argument('--simulator-record',type=Path,default=ROOT/'evidence/ipad-simulator.json');args=parser.parse_args()
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--stop-after-step',type=int,choices=range(18));parser.add_argument('--exercise-placement-errors',action='store_true');parser.add_argument('--simulator-record',type=Path,default=ROOT/'evidence/ipad-simulator.json');args=parser.parse_args()
 fixture=json.loads(args.simulator_record.read_text());uid=fixture['simulator_id']
 assert fixture['screen_points'][0]>=1000 and fixture['screen_points'][1]>=700 and fixture['observed_interface_orientation'] in [3,4], 'Use an observed landscape iPad fixture'
 c=Path(subprocess.check_output(['xcrun','simctl','get_app_container',uid,'org.openttd.reimagined.dev','data'],text=True).strip());state_path=c/'Documents/OpenTTD/native-session.json'
@@ -36,6 +36,23 @@ def step(n,timeout=25):
 def action(*values):subprocess.run(['python3',str(ROOT/'script/qa_native_action.py'),*map(str,values),'--simulator-record',str(args.simulator_record)],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
 def tap(id):action('tap',id)
 def label(text):subprocess.run(['python3',str(ROOT/'script/tap_native_widget.py'),'--label',text,'--simulator-record',str(args.simulator_record)],cwd=ROOT,check=True,stdout=subprocess.DEVNULL)
+placement_records=[]
+def placement_help(expected_step,phrase):
+    deadline=time.monotonic()+20
+    while time.monotonic()<deadline:
+        s=read()
+        if phrase in s.get('tutorial',{}).get('text',''):break
+        time.sleep(.1)
+    else:raise RuntimeError(s.get('tutorial'))
+    assert current(s)==expected_step,'A misplaced build must not advance the lesson'
+    assert s['tutorial']['target']['label']=='Show build tile'
+    assert s['camera'][2]<=1,'Placement targets need a usable close-up'
+    placement_records.append(s)
+    (ROOT/'evidence/tutorial-placement-recovery-hid.json').write_text(json.dumps(placement_records,indent=2))
+    label('Show build tile');close_story()
+    shot=ROOT/'evidence'/f'tutorial-placement-{expected_step}-{len(placement_records)}.png'
+    subprocess.run(['xcrun','simctl','io',uid,'screenshot',str(shot)],check=True,stdout=subprocess.DEVNULL)
+    print('Verified placement recovery:',phrase,flush=True)
 def close_story():
     if any(w['id']=='ottd.close.39.0' for w in read()['widgets']):tap('ottd.close.39.0')
 def selected(id):return next(w['selected'] for w in read()['widgets'] if w['id']==id)
@@ -46,9 +63,18 @@ s=read();assert s['mode']=='menu','Start at the owned fixture main menu; never r
 label('Help & Manuals');label('First steps tutorial');label('Play first-route lesson');step(0)
 assert not read()['newgrfs'],'The starter level must not inherit optional content'
 label('Begin lesson');step(1);close_story();tap('ottd.1.0.22');label('Road construction');step(2)
-tap('ottd.3.1.7');step(3);close_story();tap('ottd.57.1.5');action('move','ottd.57.1.0',210,155);action('tile',34,64)
+tap('ottd.3.1.7');step(3);close_story();tap('ottd.57.1.5');action('move','ottd.57.1.0',210,155)
+if args.exercise_placement_errors:
+    action('tile',35,64);placement_help(3,'THAT BUILD IS OUTSIDE');close_story()
+action('tile',34,64)
 step(4);close_story();assert selected('ottd.57.1.5');action('tile',78,64)
-step(5);close_story();tap('ottd.3.1.5');step(6);close_story();tap('ottd.59.1.4');action('move','ottd.59.1.0',210,155);action('tile',48,65)
+step(5);close_story();tap('ottd.3.1.5');step(6);close_story();tap('ottd.59.1.4');action('move','ottd.59.1.0',210,155)
+if args.exercise_placement_errors:
+    action('tile',49,65);placement_help(6,'THAT BUILD IS OUTSIDE');close_story()
+    tap('ottd.59.1.3');action('tile',48,65);placement_help(6,'RIGHT TILE, WRONG');close_story()
+    tap('ottd.3.1.4');action('tile',48,65)
+    tap('ottd.3.1.5');tap('ottd.59.1.4')
+action('tile',48,65)
 step(7);close_story();tap('ottd.close.3.1');action('tile',48,65)
 step(8);close_story();tap('ottd.48.8368.10');step(9);close_story();tap('ottd.54.8368.9');step(10);step(11);close_story()
 for id in ['ottd.close.54.8368','ottd.close.48.8368']:

@@ -25,3 +25,31 @@ BOOL InstallClassicMenuIfUnmodified(NSURL *bundleData,NSURL *root,NSError **erro
  }
  return [replacement writeToURL:destination options:NSDataWritingAtomic error:error];
 }
+
+BOOL InstallTutorialIfUnmodified(NSURL *bundleData,NSURL *root,NSError **error){
+ // Upgrade only the previously shipped files. A custom script or a
+ // symlink anywhere along this path keeps the whole player package untouched.
+ NSFileManager *fm=NSFileManager.defaultManager;
+ for(NSString *parent in @[@"",@"game",@"game/TouchFirstRoute",@"game/TouchFirstRoute/lang"]){
+  NSDictionary *a=[fm attributesOfItemAtPath:[root URLByAppendingPathComponent:parent].path error:nil];
+  if(![a[NSFileType] isEqual:NSFileTypeDirectory])return YES;
+ }
+ NSArray<NSString*> *names=@[@"game/TouchFirstRoute/lang/english.txt",@"game/TouchFirstRoute/main.nut",@"game/TouchFirstRoute/info.nut"];
+ NSArray<NSString*> *oldHashes=@[@"16d1d5acd672c2db80f59e81db7e1426a8d160bd2f0bd9953b96b1b916c815ee",@"ff543fcfdfa46b72da0276175f183d72098df7bbdcb95f45d72b151af2b37470",@""];
+ NSMutableArray<NSData*> *replacement=[NSMutableArray array],*existing=[NSMutableArray array];
+ for(NSUInteger i=0;i<names.count;++i){
+  NSURL *target=[root URLByAppendingPathComponent:names[i]];
+  NSDictionary *a=[fm attributesOfItemAtPath:target.path error:nil];
+  if(![a[NSFileType] isEqual:NSFileTypeRegular]||[a[NSFileSize] unsignedLongLongValue]>256*1024)return YES;
+  NSData *next=[NSData dataWithContentsOfURL:[bundleData URLByAppendingPathComponent:names[i]] options:0 error:error];if(!next)return NO;
+  NSData *old=[NSData dataWithContentsOfURL:target options:0 error:error];if(!old)return NO;
+  if(![old isEqual:next]&&![Digest(old) isEqual:oldHashes[i]])return YES;
+  [replacement addObject:next];[existing addObject:old];
+ }
+ // Translation first is compatible with the old script. Each atomic write can
+ // be resumed next launch if installation was interrupted between the files.
+ for(NSUInteger i=0;i<names.count;++i)if(![existing[i] isEqual:replacement[i]]){
+  if(![replacement[i] writeToURL:[root URLByAppendingPathComponent:names[i]] options:NSDataWritingAtomic error:error])return NO;
+ }
+ return YES;
+}
