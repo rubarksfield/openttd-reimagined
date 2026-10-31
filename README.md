@@ -51,12 +51,12 @@ For command-line simulator builds and reference checks:
 ```sh
 ./script/build_ipad_app.sh simulator
 python3 script/test_reference.py
-python3 script/test_content_import.py
+python3 script/test_content_import.py  # prepare native executable and real fixtures first
 python3 script/test_managed_resources.py
 python3 script/prepare_tutorial.py
 ```
 
-The last command verifies the lesson save in stock OpenTTD. GUI/HID checks require a separately configured, project-owned simulator fixture. They do not run against your personal game automatically.
+See [test status and fixture prerequisites](docs/TESTING.md) before running importer checks. The last command verifies the lesson save in stock OpenTTD. GUI/HID checks require a separately configured, project-owned simulator fixture. They do not run against your personal game automatically.
 
 ## Fork it. Break it. Build something better.
 
